@@ -16,17 +16,30 @@ race_yr   <- '2019'
 race_cty  <- 'Chattanooga'
 race_st   <- 'TN'
 race_type <- 'half'
+
 race_file <- glue("{race_yr}_{race_cty}_{race_st}_{race_type}") 
 race_df   <- as_tibble(readTCX(file = glue("data/{race_file}.tcx")))
 
 center_lat <- get_center(race_df$latitude)
 center_lon <- get_center(race_df$longitude)
 
+# each map is different, and it takes some fiddling to find
+# the write set of graphic parameters to make the city map
+# look the way we want it. We keep each city's set of graphic
+# parameters saved here so we can reproduce a figure if needed.
+
+mp_pars <- switch(
+  race_cty, 
+  'Chattanooga' = list(size = c(640, 640), zoom = 14, scale = 2),
+  'Orlando' = list(size = c(500, 500), zoom = 13, scale = 2),
+  list(size = c(500, 500), zoom = 13, scale = 2)
+)
+
 mp <- get_googlemap(
-  center = c(lon = center_lon, lat = center_lat),
-  size = c(640, 640),
-  zoom = 14,
-  scale = 2,
+  center  = c(lon = center_lon, lat = center_lat),
+  size    = mp_pars$size,
+  zoom    = mp_pars$zoom,
+  scale   = mp_pars$scale,
   maptype = 'terrain'
 )
 
@@ -57,19 +70,22 @@ p <- ggmap(mp) +
   ) + 
   theme_void()
 
+p
+
 race_df[1,]
 
 ggsave(glue("plots/{race_file}.png"), plot = p, device = 'png',
   width = 8, height = 8, units = 'in', dpi = 600)
 
 img <- image_read(glue("img/{race_file}.png")) %>% 
-  image_scale(geometry = c('x400'))
+  image_scale(geometry = c('x300'))
 
 plt <- image_read(glue("plots/{race_file}.png")) %>% 
-  image_scale(geometry = c('x400'))
+  image_scale(geometry = c('x300'))
 
 final_plot <- image_append(c(img, plt))
 
-final_plot
+image_write(final_plot, path = glue('output/{race_file}.png'))
+
 
 

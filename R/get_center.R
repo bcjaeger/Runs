@@ -1,4 +1,4 @@
 
 get_center <- function(x){
-  sum(range(x)) / 2
+  sum(range(x, na.rm = TRUE)) / 2
 }
